@@ -1,0 +1,16 @@
+{
+  "content": [
+    {
+      "title": "LoopBack Crate Connector API",
+      "depth": 2
+    },
+    "lib/crate.js",
+    {
+      "title": "Crate Discovery API",
+      "depth": 2
+    },
+    "lib/discovery.js"
+  ],
+  "codeSectionDepth": 3
+}
+

@@ -1,0 +1,32 @@
+{
+  "name": "loopback-connector-crate",
+  "version": "0.0.1",
+  "description": "crate connector for loopback-datasource-juggler",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "loopback-connector": "1.x",
+    "node-crate": "~1.0.20",
+    "async": "~0.9.0",
+    "debug": "~2.0.0"
+  },
+  "devDependencies": {
+    "loopback-datasource-juggler": "1.x.x",
+    "should": "~1.3.0",
+    "mocha": "~1.20.1",
+    "rc": "~0.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crate/loopback-connector-crate.git"
+  },
+  "license": {
+    "name": "Dual MIT/StrongLoop",
+    "url": "https://github.com/strongloop/loopback-connector-crate/blob/master/LICENSE"
+  },
+  "optionalDependencies": {
+    "sl-blip": "http://blip.strongloop.com/loopback-connector-crate@1.5.1"
+  }
+}
