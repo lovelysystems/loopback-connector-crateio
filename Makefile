@@ -1,8 +1,11 @@
 ## TESTS
 
 TESTER = ./node_modules/.bin/mocha
-OPTS = --growl --globals getSchema --timeout 15000
-TESTS = test/*.test.js
+OPTS = --growl
+TESTS = test/crate.*.js
+
+debug:
+	$(TESTER) --debug-brk $(OPTS) $(TESTS)
 
 test:
 	$(TESTER) $(OPTS) $(TESTS)
@@ -10,4 +13,5 @@ test-verbose:
 	$(TESTER) $(OPTS) --reporter spec $(TESTS)
 testing:
 	$(TESTER) $(OPTS) --watch $(TESTS)
-.PHONY: test docs coverage 
+
+.PHONY: debug test docs coverage
