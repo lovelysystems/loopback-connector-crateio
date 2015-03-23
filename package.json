@@ -1,6 +1,6 @@
 {
   "name": "loopback-connector-crate",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "crate connector for loopback-datasource-juggler",
   "main": "index.js",
   "scripts": {
@@ -9,8 +9,7 @@
   "dependencies": {
     "loopback-connector": "1.x",
     "node-crate": "~1.0.20",
-    "async": "~0.9.0",
-    "debug": "~2.0.0"
+    "async": "~0.9.0"
   },
   "devDependencies": {
     "loopback-datasource-juggler": "^2.7.0",
