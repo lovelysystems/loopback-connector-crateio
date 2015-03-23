@@ -1,6 +1,10 @@
 ## loopback-connector-crate
 
+Please note that this package is in a very early state and is experimental.
+
 `loopback-connector-crate` is the Crate connector module for [loopback-datasource-juggler](https://github.com/strongloop/loopback-datasource-juggler/).
+
+It is derived from the mysql implementation at [loopback-connector-mysql](https://github.com/strongloop/loopback-connector-mysql)
 
 ## Installation
 
@@ -35,3 +39,14 @@ To use it you need `loopback-datasource-juggler`.
         });
     ```
 
+
+## Testing
+
+To run tests crate must be running.
+
+Simplest way to install and run crate:
+
+````sh
+bash -c "$(curl -L try.crate.io)"
+````
+    
