@@ -2,6 +2,14 @@
   "name": "loopback-connector-crateio",
   "version": "0.1.1",
   "description": "crate connector for loopback-datasource-juggler",
+  "keywords": [
+      "crate",
+      "crateio",
+      "loopback",
+      "connector",
+      "strongloop",
+      "datasource"
+      ],
   "main": "index.js",
   "scripts": {
     "test": "mocha"
