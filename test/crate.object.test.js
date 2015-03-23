@@ -12,7 +12,7 @@ describe('crate.object', function () {
         },
         o: {
             type: Object
-        },
+        }
     });
     db.automigrate(['ModelWithObject'], function (err) {
         should.not.exist(err);
@@ -31,7 +31,7 @@ describe('crate.object', function () {
         o: {
             type: Object,
             policy: 'STRICT'
-        },
+        }
     });
     db.automigrate(['ModelWithStrictObject'], function (err) {
         should.not.exist(err);
@@ -55,7 +55,7 @@ describe('crate.object', function () {
             type: Object,
             policy: 'STRICT',
             schema: 'ObjectModel'
-        },
+        }
     });
     db.automigrate(['ModelWithSchemaObject'], function (err) {
         should.not.exist(err);
