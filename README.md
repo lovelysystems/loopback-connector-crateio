@@ -61,7 +61,7 @@ It is not possible to create indices.
 
 ## Testing
 
-To run tests crate must be running.
+To run tests a instance crate must be running on port 4200.
 
 Simplest way to install and run crate:
 
