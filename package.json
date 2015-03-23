@@ -1,6 +1,6 @@
 {
-  "name": "loopback-connector-crate",
-  "version": "0.1.0",
+  "name": "loopback-connector-crateio",
+  "version": "0.1.1",
   "description": "crate connector for loopback-datasource-juggler",
   "main": "index.js",
   "scripts": {
@@ -19,13 +19,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/crate/loopback-connector-crate.git"
+    "url": "https://github.com/lovelysystems/loopback-connector-crateio.git"
   },
   "license": {
-    "name": "Dual MIT/StrongLoop",
-    "url": "https://github.com/strongloop/loopback-connector-crate/blob/master/LICENSE"
-  },
-  "optionalDependencies": {
-    "sl-blip": "http://blip.strongloop.com/loopback-connector-crate@1.5.1"
+    "name": "MIT",
+    "url": "https://github.com/lovelysystems/loopback-connector-crateio/blob/master/LICENSE"
   }
 }
