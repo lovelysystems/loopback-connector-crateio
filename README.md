@@ -1,4 +1,4 @@
-## loopback-connector-crate
+## loopback-connector-crateio
 
 Please note that this package is in a very early state and is experimental.
 
@@ -9,7 +9,7 @@ It is derived from the mysql implementation at [loopback-connector-mysql](https:
 ## Installation
 
 ````sh
-npm install loopback-connector-crate --save
+npm install loopback-connector-crateio --save
 ````
 
 ## Basic use
@@ -23,7 +23,7 @@ To use it you need `loopback-datasource-juggler`.
       ...
       "dependencies": {
         "loopback-datasource-juggler": "latest",
-        "loopback-connector-crate": "latest"
+        "loopback-connector-crateio": "latest"
       },
       ...
     }
@@ -33,12 +33,31 @@ To use it you need `loopback-datasource-juggler`.
 
     ```javascript
         var DataSource = require('loopback-datasource-juggler').DataSource;
-        var dataSource = new DataSource('crate', {
+        var dataSource = new DataSource('crateio', {
             host: 'localhost',
             port: 4200
         });
     ```
 
+## Crate Features
+
+Models can be defined with object properties:
+
+    ```json
+    var ModelWithSchemaObject = db.define('ModelWithSchemaObject', {
+        o: {
+            type: Object,
+            policy: 'STRICT',
+            schema: 'ObjectModel'
+        }
+    });
+    ```
+
+## Limitations
+
+alterTable can only add/create new properties.
+
+It is not possible to create indices.
 
 ## Testing
 
