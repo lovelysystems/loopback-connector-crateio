@@ -466,12 +466,42 @@ describe('crate', function () {
     }
   });
 
+  it('typify should parse array and object fields', function (done) {
+    var data = {
+        "title":"a",
+        "content":"AAA",
+        "comments":["1","2","3"],
+        "numbers": [1,2,3,4,5],
+        "history": {a: 1, b: 'b'}
+    };
+    Array.prototype.foo = "foo!";
+    Object.prototype.boo = "boo!";
+    try {
+      var r = db.connector.typify('PostWithDefaultId', "comments", data["comments"]);
+      r.should.be.eql("['1', '2', '3']");
+      done();
+    } catch (err) {
+      done(err);
+    }
+  });
+
   it('create should update the array fields', function (done) {
     Post.create({title: 'a', content: 'AAA', comments: ['1','2','3']}, function (err, post) {
       should.not.exist(err);
       Post.findById(post.id, function (err, p) {
         p.id.should.be.equal(post.id);
         p.comments.should.eql(['1','2','3']);
+        done(err);
+      });
+    });
+  });
+
+  it('create should update the blank array fields', function (done) {
+    Post.create({title: 'a',comments: [], comments:[], content: 'AAA' }, function (err, post) {
+      should.not.exist(err);
+      Post.findById(post.id, function (err, p) {
+        p.id.should.be.equal(post.id);
+        p.comments.should.eql([]);
         done();
       });
     });
@@ -484,7 +514,7 @@ describe('crate', function () {
         should.not.exist(err);
         Post.findById(post.id, function (err, p) {
           p.id.should.be.equal(post.id);
-          p.comments.should.eql(post.comments);
+          p.comments.should.eql(['1','2','3']);
           done();
         });
       });
