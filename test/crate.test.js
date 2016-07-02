@@ -1,6 +1,7 @@
 var should = require('./init.js');
 
-var Post, PostWithUniqueTitle, db;
+var Post, PostWithUniqueTitle, PostWithCamelCaseColumn, db;
+var tables = ['PostWithDefaultId', 'PostWithUniqueTitle', 'PostWithCamelCaseColumn'];
 
 describe('crate', function () {
 
@@ -20,14 +21,20 @@ describe('crate', function () {
       content: { type: String }
     });
 
-    db.automigrate(['PostWithDefaultId', 'PostWithUniqueTitle'], function (err) {
+    PostWithCamelCaseColumn = db.define('PostWithCamelCaseColumn', {
+      titleCamelCase: { type: String},
+      timeStamp: { type: Date, default: '$now'},
+      content: { type: String }
+    });
+
+    db.automigrate(tables, function (err) {
       should.not.exist(err);
       done(err);
     });
   });
 
   beforeEach(function (done) {
-    var toDestroy = 2;
+    var toDestroy = tables.length;
     function destroyed() {
         toDestroy--;
         if (toDestroy <= 0) {
@@ -36,6 +43,7 @@ describe('crate', function () {
     }
     Post.destroyAll(destroyed);
     PostWithUniqueTitle.destroyAll(destroyed);
+    PostWithCamelCaseColumn.destroyAll(destroyed);
   });
 
   it('should allow array or object', function (done) {
@@ -427,9 +435,47 @@ describe('crate', function () {
       });
   });
 
-  after(function (done) {
-    Post.destroyAll(function () {
-      PostWithUniqueTitle.destroyAll(done);
+  it('should allow camelCase table columns', function (done) {
+    PostWithCamelCaseColumn.create({content: 'Hello'}, function (err, post) {
+      PostWithCamelCaseColumn.findById(post.id, function (err, p) {
+        should.not.exist(err);
+        p.should.have.property('titleCamelCase');
+        p.should.not.have.property('titlecamelcase');
+        p.should.have.property('timeStamp');
+        p.should.not.have.property('timestamp');
+        done();
+      });
     });
   });
+
+  after(function (done) {
+    Post.destroyAll(function () {
+      PostWithUniqueTitle.destroyAll(function () {
+        PostWithCamelCaseColumn.destroyAll(function () {
+          dropTestTables(done);
+        });
+      });
+    });
+  });
+
+  function dropTestTables(done) {
+    db = getDataSource();
+    db.discoverModelDefinitions({}, function(err, data) {
+      if (err) {
+          done(err);
+          return;
+      }
+      var dropCount = tables.length;
+      function dropped(err, data) {
+          dropCount--;
+          if (dropCount === 0) {
+              done();
+          }
+      }
+      tables.forEach(function(tableName) {
+          db.connector.query('DROP TABLE ' + tableName, dropped);
+      });
+    });
+  };
+
 });
