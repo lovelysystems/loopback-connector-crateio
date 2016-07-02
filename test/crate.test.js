@@ -1,7 +1,7 @@
 var should = require('./init.js');
 
 var Post, PostWithUniqueTitle, PostWithCamelCaseColumn, db;
-var tables = ['PostWithDefaultId', 'PostWithUniqueTitle', 'PostWithCamelCaseColumn'];
+var testTables = ['PostWithDefaultId', 'PostWithUniqueTitle', 'PostWithCamelCaseColumn'];
 
 describe('crate', function () {
 
@@ -12,6 +12,7 @@ describe('crate', function () {
       title: { type: String, length: 255, index: true },
       content: { type: String },
       comments: [String],
+      numbers: [Number],
       history: Object,
       stars: Number
     });
@@ -23,18 +24,18 @@ describe('crate', function () {
 
     PostWithCamelCaseColumn = db.define('PostWithCamelCaseColumn', {
       titleCamelCase: { type: String},
-      timeStamp: { type: Date, default: '$now'},
+      timeStamp: { type: Date, defaultFn: 'now'},
       content: { type: String }
     });
 
-    db.automigrate(tables, function (err) {
+    db.automigrate(testTables, function (err) {
       should.not.exist(err);
       done(err);
     });
   });
 
   beforeEach(function (done) {
-    var toDestroy = tables.length;
+    var toDestroy = testTables.length;
     function destroyed() {
         toDestroy--;
         if (toDestroy <= 0) {
@@ -448,14 +449,50 @@ describe('crate', function () {
     });
   });
 
-  after(function (done) {
-    Post.destroyAll(function () {
-      PostWithUniqueTitle.destroyAll(function () {
-        PostWithCamelCaseColumn.destroyAll(function () {
-          dropTestTables(done);
+  it('toFields should parse array and object fields', function (done) {
+    var data = {
+        "title":"a",
+        "content":"AAA",
+        "comments":["1","2","3"],
+        "numbers": [1,2,3,4,5],
+        "history": {a: 1, b: 'b'}
+    };
+    try {
+      var r = db.connector.toFields('PostWithDefaultId', data);
+      r.should.be.equal("\"title\" = 'a',\"content\" = 'AAA',\"comments\" = ['1','2','3'],\"numbers\" = [1,2,3,4,5],\"history\" = {\"a\"=1, \"b\"='b'}");
+      done();
+    } catch (err) {
+      done(err);
+    }
+  });
+
+  it('create should update the array fields', function (done) {
+    Post.create({title: 'a', content: 'AAA', comments: ['1','2','3']}, function (err, post) {
+      should.not.exist(err);
+      Post.findById(post.id, function (err, p) {
+        p.id.should.be.equal(post.id);
+        p.comments.should.eql(['1','2','3']);
+        done();
+      });
+    });
+  });
+
+  it('updateOrCreate should update the array fields', function (done) {
+    Post.create({title: 'a', content: 'AAA'}, function (err, post) {
+      post.comments = ['1','2','3'];
+      Post.updateOrCreate(post, function (err, p) {
+        should.not.exist(err);
+        Post.findById(post.id, function (err, p) {
+          p.id.should.be.equal(post.id);
+          p.comments.should.eql(post.comments);
+          done();
         });
       });
     });
+  });
+
+  after(function (done) {
+    dropTestTables(done);
   });
 
   function dropTestTables(done) {
@@ -465,15 +502,15 @@ describe('crate', function () {
           done(err);
           return;
       }
-      var dropCount = tables.length;
+      var dropCount = testTables.length;
       function dropped(err, data) {
           dropCount--;
           if (dropCount === 0) {
               done();
           }
       }
-      tables.forEach(function(tableName) {
-          db.connector.query('DROP TABLE ' + tableName, dropped);
+      testTables.forEach(function(tableName) {
+          db.connector.query('DROP TABLE IF EXISTS ' + tableName, dropped);
       });
     });
   };
