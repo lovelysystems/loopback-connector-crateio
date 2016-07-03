@@ -45,6 +45,9 @@ describe('crate', function () {
     Post.destroyAll(destroyed);
     PostWithUniqueTitle.destroyAll(destroyed);
     PostWithCamelCaseColumn.destroyAll(destroyed);
+
+    Array.prototype.foo = "foo!";
+    Object.prototype.boo = "boo!";
   });
 
   it('should allow array or object', function (done) {
@@ -126,7 +129,42 @@ describe('crate', function () {
         done();
       });
     });
+  });
 
+  it('updateOrCreate should update the array fields', function (done) {
+    Post.create({title: 'a', content: 'AAA'}, function (err, post) {
+      post.comments = ['1','2','3'];
+      Post.updateOrCreate(post, function (err, p) {
+        should.not.exist(err);
+        Post.findById(post.id, function (err, p) {
+          p.id.should.be.equal(post.id);
+          p.comments.should.eql(['1','2','3']);
+          done();
+        });
+      });
+    });
+  });
+
+  it('create should insert the array fields', function (done) {
+    Post.create({title: 'a', content: 'AAA', comments: ['1','2','3']}, function (err, post) {
+      should.not.exist(err);
+      Post.findById(post.id, function (err, p) {
+        p.id.should.be.equal(post.id);
+        p.comments.should.eql(['1','2','3']);
+        done(err);
+      });
+    });
+  });
+
+  it('create should insert the empty array fields', function (done) {
+    Post.create({title: 'a',comments: [], comments:[], content: 'AAA' }, function (err, post) {
+      should.not.exist(err);
+      Post.findById(post.id, function (err, p) {
+        p.id.should.be.equal(post.id);
+        p.comments.should.eql([]);
+        done();
+      });
+    });
   });
 
   it('save should update the instance with the same id', function (done) {
@@ -474,8 +512,6 @@ describe('crate', function () {
         "numbers": [1,2,3,4,5],
         "history": {a: 1, b: 'b'}
     };
-    Array.prototype.foo = "foo!";
-    Object.prototype.boo = "boo!";
     try {
       var r = db.connector.typify('PostWithDefaultId', "comments", data["comments"]);
       r.should.be.eql("['1', '2', '3']");
@@ -485,41 +521,52 @@ describe('crate', function () {
     }
   });
 
-  it('create should update the array fields', function (done) {
-    Post.create({title: 'a', content: 'AAA', comments: ['1','2','3']}, function (err, post) {
+  it('typify should parse empty array fields to NULL', function (done) {
+    var data = {
+        "title": "a",
+        "comments": [],
+        "numbers": [7,8,9],
+        "history": {a: 1, b: 'b'},
+        stars: 5
+    };
+    try {
+      var r = db.connector.toFields('PostWithDefaultId', data);
+      r.should.be.eql("\"title\" = 'a',\"comments\" = NULL,\"numbers\" = [7,8,9],\"history\" = {\"a\"=1, \"b\"='b'},\"stars\" = 5");
+      done();
+    } catch (err) {
       should.not.exist(err);
-      Post.findById(post.id, function (err, p) {
-        p.id.should.be.equal(post.id);
-        p.comments.should.eql(['1','2','3']);
-        done(err);
-      });
-    });
+      done(err);
+    }
   });
 
-  it('create should update the blank array fields', function (done) {
-    Post.create({title: 'a',comments: [], comments:[], content: 'AAA' }, function (err, post) {
+  it('typify should parse JSON array fields', function (done) {
+    var jsonArrayModel = {
+        "title": "String",
+        "jsonArray": "Array",
+        "comments": "[String]",
+        "numbers": "[Number]",
+        "history": Object,
+        "stars": Number
+    };
+    var jsonArrayModel = db.define('jsonArrayModel', jsonArrayModel);
+    var data = {
+        "title": "a",
+        "jsonArray" : ["1","2","3"],
+        "comments": ["4","5","6"],
+        "numbers": [7,8,9],
+        "history": {a: 1, b: 'b'},
+        "stars": 5
+    };
+    try {
+      var r = db.connector.toFields('jsonArrayModel', data);
+      r.should.be.eql("\"title\" = 'a',\"jsonArray\" = ['1','2','3'],\"comments\" = [\"4\",\"5\",\"6\"],\"numbers\" = [7,8,9],\"history\" = {\"a\"=1, \"b\"='b'},\"stars\" = 5");
+      done();
+    } catch (err) {
       should.not.exist(err);
-      Post.findById(post.id, function (err, p) {
-        p.id.should.be.equal(post.id);
-        p.comments.should.eql([]);
-        done();
-      });
-    });
+      done(err);
+    }
   });
 
-  it('updateOrCreate should update the array fields', function (done) {
-    Post.create({title: 'a', content: 'AAA'}, function (err, post) {
-      post.comments = ['1','2','3'];
-      Post.updateOrCreate(post, function (err, p) {
-        should.not.exist(err);
-        Post.findById(post.id, function (err, p) {
-          p.id.should.be.equal(post.id);
-          p.comments.should.eql(['1','2','3']);
-          done();
-        });
-      });
-    });
-  });
 
   after(function (done) {
     dropTestTables(done);
