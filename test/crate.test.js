@@ -1,6 +1,7 @@
 var should = require('./init.js');
 
-var Post, PostWithUniqueTitle, db;
+var Post, PostWithUniqueTitle, PostWithCamelCaseColumn, db;
+var testTables = ['PostWithDefaultId', 'PostWithUniqueTitle', 'PostWithCamelCaseColumn'];
 
 describe('crate', function () {
 
@@ -11,6 +12,7 @@ describe('crate', function () {
       title: { type: String, length: 255, index: true },
       content: { type: String },
       comments: [String],
+      numbers: [Number],
       history: Object,
       stars: Number
     });
@@ -20,14 +22,20 @@ describe('crate', function () {
       content: { type: String }
     });
 
-    db.automigrate(['PostWithDefaultId', 'PostWithUniqueTitle'], function (err) {
+    PostWithCamelCaseColumn = db.define('PostWithCamelCaseColumn', {
+      titleCamelCase: { type: String},
+      timeStamp: { type: Date, defaultFn: 'now'},
+      content: { type: String }
+    });
+
+    db.automigrate(testTables, function (err) {
       should.not.exist(err);
       done(err);
     });
   });
 
   beforeEach(function (done) {
-    var toDestroy = 2;
+    var toDestroy = testTables.length;
     function destroyed() {
         toDestroy--;
         if (toDestroy <= 0) {
@@ -36,6 +44,10 @@ describe('crate', function () {
     }
     Post.destroyAll(destroyed);
     PostWithUniqueTitle.destroyAll(destroyed);
+    PostWithCamelCaseColumn.destroyAll(destroyed);
+
+    Array.prototype.foo = "foo!";
+    Object.prototype.boo = "boo!";
   });
 
   it('should allow array or object', function (done) {
@@ -117,7 +129,42 @@ describe('crate', function () {
         done();
       });
     });
+  });
 
+  it('updateOrCreate should update the array fields', function (done) {
+    Post.create({title: 'a', content: 'AAA'}, function (err, post) {
+      post.comments = ['1','2','3'];
+      Post.updateOrCreate(post, function (err, p) {
+        should.not.exist(err);
+        Post.findById(post.id, function (err, p) {
+          p.id.should.be.equal(post.id);
+          p.comments.should.eql(['1','2','3']);
+          done();
+        });
+      });
+    });
+  });
+
+  it('create should insert the array fields', function (done) {
+    Post.create({title: 'a', content: 'AAA', comments: ['1','2','3']}, function (err, post) {
+      should.not.exist(err);
+      Post.findById(post.id, function (err, p) {
+        p.id.should.be.equal(post.id);
+        p.comments.should.eql(['1','2','3']);
+        done(err);
+      });
+    });
+  });
+
+  it('create should insert the empty array fields', function (done) {
+    Post.create({title: 'a',comments: [], comments:[], content: 'AAA' }, function (err, post) {
+      should.not.exist(err);
+      Post.findById(post.id, function (err, p) {
+        p.id.should.be.equal(post.id);
+        p.comments.should.eql([]);
+        done();
+      });
+    });
   });
 
   it('save should update the instance with the same id', function (done) {
@@ -427,9 +474,122 @@ describe('crate', function () {
       });
   });
 
-  after(function (done) {
-    Post.destroyAll(function () {
-      PostWithUniqueTitle.destroyAll(done);
+  it('should allow camelCase table columns', function (done) {
+    PostWithCamelCaseColumn.create({content: 'Hello'}, function (err, post) {
+      PostWithCamelCaseColumn.findById(post.id, function (err, p) {
+        should.not.exist(err);
+        p.should.have.property('titleCamelCase');
+        p.should.not.have.property('titlecamelcase');
+        p.should.have.property('timeStamp');
+        p.should.not.have.property('timestamp');
+        done();
+      });
     });
   });
+
+  it('toFields should parse array and object fields', function (done) {
+    var data = {
+        "title":"a",
+        "content":"AAA",
+        "comments":["1","2","3"],
+        "numbers": [1,2,3,4,5],
+        "history": {a: 1, b: 'b'}
+    };
+    try {
+      var r = db.connector.toFields('PostWithDefaultId', data);
+      r.should.be.equal("\"title\" = 'a',\"content\" = 'AAA',\"comments\" = ['1','2','3'],\"numbers\" = [1,2,3,4,5],\"history\" = {\"a\"=1, \"b\"='b'}");
+      done();
+    } catch (err) {
+      done(err);
+    }
+  });
+
+  it('typify should parse array and object fields', function (done) {
+    var data = {
+        "title":"a",
+        "content":"AAA",
+        "comments":["1","2","3"],
+        "numbers": [1,2,3,4,5],
+        "history": {a: 1, b: 'b'}
+    };
+    try {
+      var r = db.connector.typify('PostWithDefaultId', "comments", data["comments"]);
+      r.should.be.eql("['1', '2', '3']");
+      done();
+    } catch (err) {
+      done(err);
+    }
+  });
+
+  it('typify should parse empty array fields to NULL', function (done) {
+    var data = {
+        "title": "a",
+        "comments": [],
+        "numbers": [7,8,9],
+        "history": {a: 1, b: 'b'},
+        stars: 5
+    };
+    try {
+      var r = db.connector.toFields('PostWithDefaultId', data);
+      r.should.be.eql("\"title\" = 'a',\"comments\" = NULL,\"numbers\" = [7,8,9],\"history\" = {\"a\"=1, \"b\"='b'},\"stars\" = 5");
+      done();
+    } catch (err) {
+      should.not.exist(err);
+      done(err);
+    }
+  });
+
+  it('typify should parse JSON array fields', function (done) {
+    var jsonArrayModel = {
+        "title": "String",
+        "jsonArray": "Array",
+        "comments": "[String]",
+        "numbers": "[Number]",
+        "history": Object,
+        "stars": Number
+    };
+    var jsonArrayModel = db.define('jsonArrayModel', jsonArrayModel);
+    var data = {
+        "title": "a",
+        "jsonArray" : ["1","2","3"],
+        "comments": ["4","5","6"],
+        "numbers": [7,8,9],
+        "history": {a: 1, b: 'b'},
+        "stars": 5
+    };
+    try {
+      var r = db.connector.toFields('jsonArrayModel', data);
+      r.should.be.eql("\"title\" = 'a',\"jsonArray\" = ['1','2','3'],\"comments\" = [\"4\",\"5\",\"6\"],\"numbers\" = [7,8,9],\"history\" = {\"a\"=1, \"b\"='b'},\"stars\" = 5");
+      done();
+    } catch (err) {
+      should.not.exist(err);
+      done(err);
+    }
+  });
+
+
+  after(function (done) {
+    dropTestTables(done);
+  });
+
+  function dropTestTables(done) {
+    db = getDataSource();
+    db.discoverModelDefinitions({}, function(err, data) {
+      if (err) {
+          done(err);
+          return;
+      }
+      var dropCount = testTables.length;
+      function dropped(err, data) {
+          dropCount--;
+          if (dropCount === 0) {
+              done();
+          }
+      }
+      testTables.forEach(function(tableName) {
+          db.connector.query('DROP TABLE IF EXISTS ' + tableName, dropped);
+      });
+    });
+  };
+
 });

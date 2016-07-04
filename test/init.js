@@ -17,7 +17,9 @@ global.getConfig = function (options) {
   };
   if (options) {
     for (var el in options) {
-      dbConf[el] = options[el];
+      if (options.hasOwnProperty(el)) {
+        dbConf[el] = options[el];
+      }
     }
   }
   return dbConf;

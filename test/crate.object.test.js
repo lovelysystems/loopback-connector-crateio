@@ -2,6 +2,8 @@ var should = require('./init.js');
 
 describe('crate.object', function () {
 
+  var testTables = ['ModelWithObject', 'ModelWithStrictObject', 'ModelWithSchemaObject'];
+
   it('should create table with a simple object', function (done) {
     db = getDataSource();
     var ModelWithObject = db.define('ModelWithObject', {
@@ -74,4 +76,27 @@ describe('crate.object', function () {
     });
   });
 
+  after(function (done) {
+    dropTestTables(done);
+  });
+  function dropTestTables(done) {
+    db = getDataSource();
+    db.discoverModelDefinitions({}, function(err, data) {
+      if (err) {
+          done(err);
+          return;
+      }
+      var dropCount = testTables.length;
+      function dropped(err, data) {
+          dropCount--;
+          if (dropCount === 0) {
+              done();
+          }
+      }
+      testTables.forEach(function(tableName) {
+          db.connector.query('DROP TABLE IF EXISTS ' + tableName, dropped);
+      });
+    });
+  };
+  
 });
